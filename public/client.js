@@ -37,6 +37,11 @@ class VoiceBotClient {
     this.remoteAudioElement = document.createElement('audio');
     this.remoteAudioElement.autoplay = true;
     this.remoteAudioElement.id = 'remoteAudio';
+    this.remoteAudioElement.volume = 1.0;
+    // Append to DOM (hidden) so autoplay policies allow playback
+    this.remoteAudioElement.style.display = 'none';
+    const container = document.querySelector('.container') || document.body;
+    container.appendChild(this.remoteAudioElement);
   }
 
   /**
@@ -150,7 +155,16 @@ class VoiceBotClient {
     // Handle remote track (bot audio)
     this.peerConnection.ontrack = (event) => {
       this.log('✓ Receiving bot audio', 'success');
-      this.remoteAudioElement.srcObject = event.streams[0];
+      try {
+        this.remoteAudioElement.srcObject = event.streams[0];
+        // Ensure playback starts (some browsers require explicit play())
+        this.remoteAudioElement.play().catch(err => {
+          // Playback may fail if not allowed; log for debugging
+          console.warn('Remote audio play() failed:', err);
+        });
+      } catch (err) {
+        console.error('Error attaching remote audio:', err);
+      }
     };
 
     // Handle connection state changes

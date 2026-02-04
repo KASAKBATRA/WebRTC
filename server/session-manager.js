@@ -113,8 +113,9 @@ export class Session {
       const ttsStartTime = Date.now();
       let firstChunk = true;
       let chunkCount = 0;
+      const abortSignal = this.ttsAbortController.signal;
       
-      for await (const pcmChunk of this.tts.generateAudioStream(botResponse, this.ttsAbortController.signal)) {
+      for await (const pcmChunk of this.tts.generateAudioStream(botResponse, abortSignal)) {
         if (firstChunk) {
           const latency = Date.now() - ttsStartTime;
           this.logger.logEvent('tts_first_chunk', { latency });
@@ -128,7 +129,7 @@ export class Session {
         await this.sendAudioToBrowser(pcmChunk);
         
         // Check if cancelled
-        if (this.ttsAbortController.signal.aborted) {
+        if (abortSignal.aborted) {
           console.log(`[Session:${this.sessionId}] TTS cancelled after ${chunkCount} chunks`);
           return;
         }
@@ -162,7 +163,8 @@ export class Session {
     // Cancel TTS immediately
     if (this.ttsAbortController) {
       this.ttsAbortController.abort();
-      this.ttsAbortController = null;
+      // Reinitialize for next TTS call
+      this.ttsAbortController = new AbortController();
     }
     
     // Flush audio buffers

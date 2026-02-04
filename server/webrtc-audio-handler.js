@@ -11,6 +11,7 @@ export class WebRTCAudioHandler {
     this.audioSource = null;
     this.audioSink = null;
     this.onAudioDataCallback = null;
+    this._sentDebugCount = 0;
   }
 
   /**
@@ -53,13 +54,27 @@ export class WebRTCAudioHandler {
     }
 
     try {
-      this.audioSource.onData({
-        samples: samples,
-        sampleRate: sampleRate,
-        bitsPerSample: 16,
-        channelCount: 1,
-        numberOfFrames: samples.length
-      });
+      // wrtc expects 10ms frames (160 samples at 16kHz)
+      // Split larger frames into 160-sample chunks
+      const CHUNK_SIZE = 160;
+      
+      for (let i = 0; i < samples.length; i += CHUNK_SIZE) {
+        const chunk = samples.slice(i, Math.min(i + CHUNK_SIZE, samples.length));
+        // Debug: log first few chunks to verify correct sizing
+        if (this._sentDebugCount < 6) {
+          console.log('[WebRTCAudioHandler] Sending chunk', this._sentDebugCount + 1, 'frames:', chunk.length, 'sampleRate:', sampleRate);
+          this._sentDebugCount++;
+        }
+
+        this.audioSource.onData({
+          samples: chunk,
+          sampleRate: sampleRate,
+          bitsPerSample: 16,
+          channelCount: 1,
+          numberOfFrames: chunk.length
+        });
+      }
+      
       return true;
     } catch (error) {
       console.error('[WebRTCAudioHandler] Error sending audio:', error);
