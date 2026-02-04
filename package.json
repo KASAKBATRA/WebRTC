@@ -1,0 +1,19 @@
+{
+  "name": "webrtc-voice-bot",
+  "version": "1.0.0",
+  "description": "Real-Time WebRTC Voice Bot Pipeline with barge-in support",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "keywords": ["webrtc", "voice-bot", "real-time", "audio"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "wrtc": "^0.4.7"
+  }
+}
